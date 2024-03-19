@@ -14,11 +14,11 @@ name: Simple Manifest PR creation / update
 on:
   workflow_call:
     secrets:
-      NCS_GITHUB_UPMERGE_TOKEN:
+      NB_TOKEN:
         required: true
 
 env:
-  GH_TOKEN: ${{ secrets.NCS_GITHUB_UPMERGE_TOKEN }}
+  GH_TOKEN: ${{ secrets.NB_TOKEN }}
 
 jobs:
 # This creates manifest PR
@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'karhama/sdk-nrf'
-          token: ${{ secrets.NCS_GITHUB_UPMERGE_TOKEN }}
+          token: ${{ secrets.NB_TOKEN }}
       - name: Setup git
         run: |
           git config --global user.email "pylon@nordicsemi.no"
@@ -60,7 +60,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'karhama/sdk-nrf'
-          token: ${{ secrets.NCS_GITHUB_UPMERGE_TOKEN }}
+          token: ${{ secrets.NB_TOKEN }}
           fetch-depth: 0
       - name: Setup git
         run: |
@@ -82,7 +82,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'karhama/sdk-nrf'
-          token: ${{ secrets.NCS_GITHUB_UPMERGE_TOKEN }}
+          token: ${{ secrets.NB_TOKEN }}
           fetch-depth: 0
       - name: Setup git
         run: |
