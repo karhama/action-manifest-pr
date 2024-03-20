@@ -47,8 +47,9 @@ jobs:
           git add west.yml
           git commit -m "manifest: Update ${{ github.event.repository.name }} revision (auto-manifest PR)" -m "Automatically created by Github Action" --signoff
           git push origin manifest_pr:auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }} -u
-          gh pr create --base main --title "manifest: Update revision of ${{ github.event.repository.name }}" \
-            --body "Automatically created by Github Action from PR: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/${{ github.event.pull_request.number }}" --label "CI-all-test"
+          MANIFEST_PR_URL=$(gh pr create --base main --title "manifest: Update revision of ${{ github.event.repository.name }}" \
+            --body "Automatically created by Github Action from PR: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/${{ github.event.pull_request.number }}" --label "CI-all-test")
+          gh pr comment ${{ github.event.pull_request.number }} --body "Manifest PR created: $MANIFEST_PR_URL" --repo {{ github.repository }}
 
 # This will retrigger CI for manifest PR
   retrigger_ci:
@@ -94,7 +95,7 @@ jobs:
           PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.repo-path == "${{ github.event.repository.name }}") |  key' west.yml)
           yq ".manifest.projects[$PROJECT_KEY].revision = \"$GITHUB_SHA\"" west.yml > tmp.yml
           diff -B west.yml tmp.yml | patch west.yml -
-      - name: Commit changed west.yml and create PR
+      - name: Commit changed west.yml
         run: |
           git add west.yml
           git commit --amend --no-edit
