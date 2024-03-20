@@ -48,7 +48,7 @@ jobs:
           git commit -m "manifest: Update ${{ github.event.repository.name }} revision (auto-manifest PR)" -m "Automatically created by Github Action" --signoff
           git push origin manifest_pr:auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }} -u
           gh pr create --base main --title "manifest: Update revision of ${{ github.event.repository.name }}" \
-            --body "Automatically created by Github Action from PR: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/${{ github.event.pull_request.number }}" --label "CI-all-test"
+            --body "Automatically created by Github Action from PR: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/${{ github.event.pull_request.number }}"
 
 # This will retrigger CI for manifest PR
   retrigger_ci:
