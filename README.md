@@ -2,7 +2,7 @@
 This action can be used to automatically create manifest PRs into sdk-nrf repo.
 
 ## usage
-You can call this workflow in your repository to automatically create manifest pull requests.
+You can call this workflow in your repository to automatically create manifest PRs.
 
 ```yaml
 name: Create manifest PR
@@ -21,7 +21,7 @@ jobs:
 
 ## about secret
 This action is designed to utilize NordicBuilder-related secret, 
-primarily for creating branches and manifest pull requests (PRs) within the sdk-nrf repository. 
+primarily for creating branches and manifest PRs within the sdk-nrf repository. 
 Ensure proper configuration of the secret in calling repository.
-**Please do not use this action if your repo has external contributors / PRs unless you know
-what you are doing.**
+**Please be careful when using this action in public repos i.e. make sure it's not triggered for outside contributors**
+
