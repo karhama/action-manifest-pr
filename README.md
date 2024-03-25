@@ -17,7 +17,7 @@ jobs:
     uses: nordicbuilder/action-manifest-pr/.github/workflows/auto-manifest-pr.yml@main
     secrets:
        NB_TOKEN: ${{ secrets.NORDICBUILDER_TOKEN }}
-
+```
 
 ## about secret
 This action is designed to utilize NordicBuilder-related secret, 
