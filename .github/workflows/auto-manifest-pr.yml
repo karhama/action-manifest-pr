@@ -23,18 +23,19 @@ env:
 jobs:
   stop_if_external:
     runs-on: ubuntu-latest
-    name: Check external
+    name: Check if user is external contributor
     steps:
-      - name: Check external
+      - name: Add external label
         uses: carlescufi/action-contribs@main
         with:
-          github-token: ${{ secrets.NB_TOKEN }}
+          github-token: ${{ secrets.NB_TOKEN }}                   
           command: 'external'
           labels: 'external'
-      - name: Exit external
+      - name: Stop in case external label is set
         if: ${{ contains(github.event.pull_request.labels.*.name, 'external') }}
         run: |
-          echo "External user detected - skipping execution of this action"
+          echo "External contribution detected. Automatic creation of manifest PR skipped."
+          echo "To test your changes, please create PR in the sdk-nrf repository."
           exit 1
 
 # This creates manifest PR
