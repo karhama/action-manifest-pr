@@ -34,7 +34,7 @@ jobs:
       - name: Exit external
         if: ${{ contains(github.event.pull_request.labels.*.name, 'external')
         run: |
-          echo "External user detected - skipping execution of this action further"
+          echo "External user detected - skipping execution of this action"
           exit 1
 
 # This creates manifest PR
