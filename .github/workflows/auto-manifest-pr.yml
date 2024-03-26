@@ -32,7 +32,7 @@ jobs:
           command: 'external'
           labels: 'external'
       - name: Exit external
-        if: ${{ contains(github.event.pull_request.labels.*.name, 'external')
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'external') }}
         run: |
           echo "External user detected - skipping execution of this action"
           exit 1
