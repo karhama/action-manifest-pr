@@ -21,6 +21,22 @@ env:
   GH_TOKEN: ${{ secrets.NB_TOKEN }}
 
 jobs:
+  stop_if_external:
+    runs-on: ubuntu-latest
+    name: Check external
+    steps:
+      - name: Check external
+        uses: carlescufi/action-contribs@main
+        with:
+          github-token: ${{ secrets.NB_TOKEN }}
+          command: 'external'
+          labels: 'external'
+      - name: Exit external
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'external')
+        run: |
+          echo "External user detected - skipping execution of this action further"
+          exit 1
+
 # This creates manifest PR
   create_manifest_pr:
     if: github.event.action == 'opened'
