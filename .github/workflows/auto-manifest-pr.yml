@@ -40,6 +40,7 @@ jobs:
 
 # This creates manifest PR
   create_manifest_pr:
+    needs: stop_if_external
     if: github.event.action == 'opened'
     runs-on: ubuntu-latest
     name: Create manifest PR in sdk-nrf repo
@@ -69,6 +70,7 @@ jobs:
 
 # This will retrigger CI for manifest PR
   retrigger_ci:
+    needs: stop_if_external
     if: github.event.action == 'synchronize'
     runs-on: ubuntu-latest
     name: Trigger sdk-nrf manifest-PR CI
@@ -91,6 +93,7 @@ jobs:
 
 # This will modify manifest PR once subrepo PR was merged
   change_pr_to_sha:
+    needs: stop_if_external
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     name: Change west.yml PR-pointer to git-sha
