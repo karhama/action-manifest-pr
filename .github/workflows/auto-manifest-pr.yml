@@ -46,7 +46,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          repository: 'nrfconnect/sdk-nrf'
+          repository: 'nrfconnect/sdk-nrf-testing'
           token: ${{ secrets.NB_TOKEN }}
       - name: Setup git
         run: |
@@ -75,7 +75,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          repository: 'nrfconnect/sdk-nrf'
+          repository: 'nrfconnect/sdk-nrf-testing'
           token: ${{ secrets.NB_TOKEN }}
           fetch-depth: 0
       - name: Setup git
@@ -97,7 +97,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          repository: 'nrfconnect/sdk-nrf'
+          repository: 'nrfconnect/sdk-nrf-testing'
           token: ${{ secrets.NB_TOKEN }}
           fetch-depth: 0
       - name: Setup git
