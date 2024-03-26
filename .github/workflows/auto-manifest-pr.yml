@@ -54,10 +54,24 @@ jobs:
         run: |
           git config --global user.email "pylon@nordicsemi.no"
           git config --global user.name "Nordic Builder"
-      - name: Change west.yml
+      - name: Change west.yml PR revision
         run: |
           PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.repo-path == "${{ github.event.repository.name }}") |  key' west.yml)
           yq ".manifest.projects[$PROJECT_KEY].revision = \"pull/${{ github.event.pull_request.number }}/head\"" west.yml > tmp.yml
+          diff -B west.yml tmp.yml | patch west.yml -
+      - name: Change west.yml Dragoon revision
+        if: ${{ startsWith(github.event.pull_request.title, 'Update MPSL and SoftDevice Controller') }}
+        env:
+          COMMITS_URL: ${{ github.event.pull_request.commits_url }}
+        run: |
+          if [ "${COMMITS_URL}x" != "x" ]; then
+            # API URL details: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-commits-on-a-pull-request
+            LAST_MSG=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "${COMMITS_URL}?per_page=3" | jq -r .[-1].commit.message)
+          fi
+          DRAGOON_REV=$(echo $LAST_MSG | awk 'NR==1 {print $3}' | head)
+          echo "DRAGOON_REV is $DRAGOON_REV"
+          PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.name == "dragoon") |  key' west.yml)
+          yq ".manifest.projects[$PROJECT_KEY].revision = \"$DRAGOON_REV\"" west.yml > tmp.yml
           diff -B west.yml tmp.yml | patch west.yml -
       - name: Commit changed west.yml and create PR
         run: |
