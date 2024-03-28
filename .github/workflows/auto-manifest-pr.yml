@@ -48,7 +48,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          repository: 'nrfconnect/sdk-nrf'
+          repository: 'nrfconnect/sdk-nrf-testing'
           token: ${{ secrets.NB_TOKEN }}
       - name: Setup git
         run: |
@@ -56,7 +56,8 @@ jobs:
           git config --global user.name "Nordic Builder"
       - name: Change west.yml PR revision
         run: |
-          PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.repo-path == "${{ github.event.repository.name }}") |  key' west.yml)
+          # PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.repo-path == "${{ github.event.repository.name }}") |  key' west.yml)
+          PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.repo-path == "sdk-nrfxlib") |  key' west.yml)
           yq ".manifest.projects[$PROJECT_KEY].revision = \"pull/${{ github.event.pull_request.number }}/head\"" west.yml > tmp.yml
           diff -B west.yml tmp.yml | patch west.yml -
       - name: Change west.yml Dragoon revision
@@ -78,7 +79,8 @@ jobs:
           git checkout -b manifest_pr
           git add west.yml
           git commit -m "manifest: Update ${{ github.event.repository.name }} revision (auto-manifest PR)" -m "Automatically created by Github Action" --signoff
-          git push origin manifest_pr:auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }} -u
+          git remote add fork https://nordicbuilder:${{ secrets.NB_TOKEN }}@github.com/nordicbuilder/sdk-nrf
+          git push fork manifest_pr:auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }} -u
           gh pr create --base main --title "manifest: Update revision of ${{ github.event.repository.name }}" \
             --body "Automatically created by Github Action from PR: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/${{ github.event.pull_request.number }}"
 
