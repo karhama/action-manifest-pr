@@ -19,6 +19,7 @@ on:
 
 env:
   GH_TOKEN: ${{ secrets.NB_TOKEN }}
+  TARGET_REPO: nrfconnect/sdk-nrf-testing
 
 jobs:
   stop_if_external:
@@ -48,7 +49,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          repository: 'nrfconnect/sdk-nrf-testing'
+          repository: ${{ env.TARGET_REPO }}
           token: ${{ secrets.NB_TOKEN }}
       - name: Setup git
         run: |
@@ -80,9 +81,8 @@ jobs:
           git add west.yml
           git commit -m "manifest: Update ${{ github.event.repository.name }} revision (auto-manifest PR)" -m "Automatically created by Github Action" --signoff
           git remote add fork https://nordicbuilder:${{ secrets.NB_TOKEN }}@github.com/nordicbuilder/sdk-nrf
-          git push fork manifest_pr:auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }} -u
-          gh pr create --head nordicbuilder:sdk-nrf/auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }} \
-            --base main --title "manifest: Update revision of ${{ github.event.repository.name }}" \
+          git push -u fork manifest_pr:auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }}
+          gh pr create --base main --repo $TARGET_REPO --title "manifest: Update revision of ${{ github.event.repository.name }}" \
             --body "Automatically created by Github Action from PR: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/${{ github.event.pull_request.number }}"
 
 # This will retrigger CI for manifest PR
@@ -95,7 +95,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          repository: 'nrfconnect/sdk-nrf'
+          repository: ${{ env.TARGET_REPO }}
           token: ${{ secrets.NB_TOKEN }}
           fetch-depth: 0
       - name: Setup git
@@ -118,7 +118,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          repository: 'nrfconnect/sdk-nrf'
+          repository: ${{ env.TARGET_REPO }}
           token: ${{ secrets.NB_TOKEN }}
           fetch-depth: 0
       - name: Setup git
