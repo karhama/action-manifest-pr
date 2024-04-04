@@ -86,7 +86,7 @@ runs:
         yq ".manifest.projects[$PROJECT_KEY].revision = \"$NRF_802154_REV\"" west.yml > tmp.yml
         diff -B west.yml tmp.yml | patch west.yml -
     - name: Commit changed west.yml and create PR
-      if: $ {{ github.event.action == 'opened' }}
+      if: ${{ github.event.action == 'opened' }}
       shell: bash
       run: |
         git checkout -b manifest_pr
