@@ -17,6 +17,11 @@ inputs:
       type: string
       default: nrfconnect/sdk-nrf-testing
       description: 'target repository for manifest PR'
+    forked-repo:
+      required: false
+      type: string
+      default: nordicbuilder/sdk-nrf-testing
+      description: 'forked repository where changes are pushed'
     token:
       required: true
       type: string
@@ -40,6 +45,7 @@ runs:
         exit 1
 
     - name: Checkout sources
+      if: ${{ github.event.action == 'opened' }}
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.target-repo }}
@@ -72,11 +78,12 @@ runs:
         echo "DRAGOON_REV is $DRAGOON_REV"
         PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.name == "dragoon") |  key' west.yml)
         yq ".manifest.projects[$PROJECT_KEY].revision = \"$DRAGOON_REV\"" west.yml > tmp.yml
-        diff -B west.yml tmp.yml | patch west.yml -
+        diff -B west.yml tmp.yml | patch west.yml - || true
 
     - name: Change west.yml nrf-802154 revision
       if: |
-        ${{ startsWith(github.event.pull_request.title, 'nrf_802154: Update revision of nrf_802154') && github.event.action == 'opened' }}
+        startsWith(github.event.pull_request.title, 'nrf_802154: Update revision of nrf_802154') && 
+        github.event.action == 'opened'
       env:
         COMMITS_URL: ${{ github.event.pull_request.commits_url }}
       shell: bash
@@ -89,7 +96,7 @@ runs:
         echo "NRF_802154_REV is $NRF_802154_REV"
         PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.name == "nrf-802154") |  key' west.yml)
         yq ".manifest.projects[$PROJECT_KEY].revision = \"$NRF_802154_REV\"" west.yml > tmp.yml
-        diff -B west.yml tmp.yml | patch west.yml -
+        diff -B west.yml tmp.yml | patch west.yml - || true
 
     - name: Commit changed west.yml and create PR
       if: ${{ github.event.action == 'opened' }}
@@ -98,8 +105,21 @@ runs:
         git checkout -b manifest_pr
         git add west.yml
         git commit -m "manifest: Update ${{ github.event.repository.name }} revision (auto-manifest PR)" -m "Automatically created by Github Action" --signoff
-        git remote add fork https://nordicbuilder:${{ inputs.token }}@github.com/nordicbuilder/sdk-nrf-testing
+        git remote add fork https://nordicbuilder:${{ inputs.token }}@github.com/${{ inputs.forked-repo }}
         git push -u fork manifest_pr:auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }}
         gh pr create --base main --repo ${{ inputs.target-repo }} --title "manifest: Update revision of ${{ github.event.repository.name }}" \
           --body "Automatically created by Github Action from PR: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/${{ github.event.pull_request.number }}"
 
+    - name: Checkout sources from fork
+      if: ${{ github.event.action == 'synchronize' }}
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.forked-repo }}
+
+    - name: Retrigger CI by changing commit sha and pushing
+      if: ${{ github.event.action == 'synchronize' }}
+      shell: bash
+      run: |
+        git checkout auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }}
+        git commit --amend --no-edit
+        git push origin auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }}:auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }} -f
