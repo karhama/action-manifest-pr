@@ -30,6 +30,7 @@ runs:
         github-token: ${{ inputs.token }}                   
         command: 'external'
         labels: 'external'
+
     - name: Stop in case external label is set
       if: ${{ contains(github.event.pull_request.labels.*.name, 'external') }}
       shell: bash
@@ -37,22 +38,27 @@ runs:
         echo "External contribution detected. Automatic creation of manifest PR skipped."
         echo "To test your changes, please create PR in the sdk-nrf repository."
         exit 1
+
     - name: Checkout sources
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.target-repo }}
+
     - name: Setup git
       shell: bash
       run: |
         git config --global user.email "pylon@nordicsemi.no"
         git config --global user.name "Nordic Builder"
+
     - name: Change west.yml PR revision
       if: ${{ github.event.action == 'opened' }}
       shell: bash
       run: |
         PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.repo-path == "sdk-nrfxlib") |  key' west.yml)
         yq ".manifest.projects[$PROJECT_KEY].revision = \"pull/${{ github.event.pull_request.number }}/head\"" west.yml > tmp.yml
+        diff -B west.yml tmp.yml
         diff -B west.yml tmp.yml | patch west.yml -
+
     - name: Change west.yml Dragoon revision
       if: ${{ startsWith(github.event.pull_request.title, 'Update MPSL and SoftDevice Controller') && github.event.action == 'opened' }}
       env:
@@ -68,6 +74,7 @@ runs:
         PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.name == "dragoon") |  key' west.yml)
         yq ".manifest.projects[$PROJECT_KEY].revision = \"$DRAGOON_REV\"" west.yml > tmp.yml
         diff -B west.yml tmp.yml | patch west.yml -
+
     - name: Change west.yml nrf-802154 revision
       if: |
         ${{ startsWith(github.event.pull_request.title, 'nrf_802154: Update revision of nrf_802154') && github.event.action == 'opened' }}
@@ -84,6 +91,7 @@ runs:
         PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.name == "nrf-802154") |  key' west.yml)
         yq ".manifest.projects[$PROJECT_KEY].revision = \"$NRF_802154_REV\"" west.yml > tmp.yml
         diff -B west.yml tmp.yml | patch west.yml -
+
     - name: Commit changed west.yml and create PR
       if: ${{ github.event.action == 'opened' }}
       shell: bash
