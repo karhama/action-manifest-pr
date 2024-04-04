@@ -46,6 +46,11 @@ runs:
       run: |
         git config --global user.email "pylon@nordicsemi.no"
         git config --global user.name "Nordic Builder"
+    - name: test
+      shell: bash
+      run: |
+        ls -l 
+        yq --version
     - name: Change west.yml PR revision
       if: ${{ github.event.action == 'opened' }}
       shell: bash
