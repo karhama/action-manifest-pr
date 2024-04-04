@@ -24,6 +24,19 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Add external label
+      uses: carlescufi/action-contribs@main
+      with:
+        github-token: ${{ inputs.token }}                   
+        command: 'external'
+        labels: 'external'
+    - name: Stop in case external label is set
+      if: ${{ contains(github.event.pull_request.labels.*.name, 'external') }}
+      shell: bash
+      run: |
+        echo "External contribution detected. Automatic creation of manifest PR skipped."
+        echo "To test your changes, please create PR in the sdk-nrf repository."
+        exit 1
     - name: Checkout sources
       uses: actions/checkout@v4
       with:
@@ -34,13 +47,15 @@ runs:
         git config --global user.email "pylon@nordicsemi.no"
         git config --global user.name "Nordic Builder"
     - name: Change west.yml PR revision
+      if: ${{ github.event.action == 'opened' }}
       shell: bash
       run: |
         PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.repo-path == "${{ github.event.repository.name }}") |  key' west.yml)
+        PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.repo-path == "sdk-nrfxlib") |  key' west.yml)
         yq ".manifest.projects[$PROJECT_KEY].revision = \"pull/${{ github.event.pull_request.number }}/head\"" west.yml > tmp.yml
         diff -B west.yml tmp.yml | patch west.yml -
     - name: Change west.yml Dragoon revision
-      if: ${{ startsWith(github.event.pull_request.title, 'Update MPSL and SoftDevice Controller') }}
+      if: ${{ startsWith(github.event.pull_request.title, 'Update MPSL and SoftDevice Controller') && github.event.action == 'opened' }}
       env:
         COMMITS_URL: ${{ github.event.pull_request.commits_url }}
       shell: bash
@@ -56,7 +71,7 @@ runs:
         diff -B west.yml tmp.yml | patch west.yml -
     - name: Change west.yml nrf-802154 revision
       if: |
-        ${{ startsWith(github.event.pull_request.title, 'nrf_802154: Update revision of nrf_802154') }}
+        ${{ startsWith(github.event.pull_request.title, 'nrf_802154: Update revision of nrf_802154') && github.event.action == 'opened' }}
       env:
         COMMITS_URL: ${{ github.event.pull_request.commits_url }}
       shell: bash
@@ -71,6 +86,7 @@ runs:
         yq ".manifest.projects[$PROJECT_KEY].revision = \"$NRF_802154_REV\"" west.yml > tmp.yml
         diff -B west.yml tmp.yml | patch west.yml -
     - name: Commit changed west.yml and create PR
+      if: $ {{ github.event.action == 'opened' }}
       shell: bash
       run: |
         git checkout -b manifest_pr
