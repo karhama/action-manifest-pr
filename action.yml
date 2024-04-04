@@ -101,6 +101,8 @@ runs:
     - name: Commit changed west.yml and create PR
       if: ${{ github.event.action == 'opened' }}
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
       run: |
         git checkout -b manifest_pr
         git add west.yml
@@ -115,6 +117,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.forked-repo }}
+        token: ${{ inputs.token }}
 
     - name: Retrigger CI by changing commit sha and pushing
       if: ${{ github.event.action == 'synchronize' }}
