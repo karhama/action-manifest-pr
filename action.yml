@@ -1,0 +1,78 @@
+#
+# You can call this workflow in your repository. See the example caller workflow:
+#
+# --------------------------------------------------------------------------------------
+# name: Auto create manifest PR
+# on: pull_request
+# jobs:
+#   call-workflow:
+#     uses: nordicbuilder/action-manifest-pr/.github/workflows/auto-manifest-PR.yml@main
+# --------------------------------------------------------------------------------------
+
+name: 'Simple Manifest PR creation / update'
+description: 'Creates manifest PR into repository'
+inputs:
+    target-repo:
+      required: false
+      type: string
+      default: nrfconnect/sdk-nrf-testing
+      description: 'target repository for manifest PR'
+    token:
+      required: true
+      type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.target-repo }}
+    - name: Setup git
+      run: |
+        git config --global user.email "pylon@nordicsemi.no"
+        git config --global user.name "Nordic Builder"
+    - name: Change west.yml PR revision
+      run: |
+        PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.repo-path == "${{ github.event.repository.name }}") |  key' west.yml)
+        yq ".manifest.projects[$PROJECT_KEY].revision = \"pull/${{ github.event.pull_request.number }}/head\"" west.yml > tmp.yml
+        diff -B west.yml tmp.yml | patch west.yml -
+    - name: Change west.yml Dragoon revision
+      if: ${{ startsWith(github.event.pull_request.title, 'Update MPSL and SoftDevice Controller') }}
+      env:
+        COMMITS_URL: ${{ github.event.pull_request.commits_url }}
+      run: |
+        if [ "${COMMITS_URL}x" != "x" ]; then
+          # API URL details: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-commits-on-a-pull-request
+          LAST_MSG=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "${COMMITS_URL}?per_page=3" | jq -r .[-1].commit.message)
+        fi
+        DRAGOON_REV=$(echo $LAST_MSG | awk 'NR==1 {print $3}' | head)
+        echo "DRAGOON_REV is $DRAGOON_REV"
+        PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.name == "dragoon") |  key' west.yml)
+        yq ".manifest.projects[$PROJECT_KEY].revision = \"$DRAGOON_REV\"" west.yml > tmp.yml
+        diff -B west.yml tmp.yml | patch west.yml -
+    - name: Change west.yml nrf-802154 revision
+      if: |
+        ${{ startsWith(github.event.pull_request.title, 'nrf_802154: Update revision of nrf_802154') }}
+      env:
+        COMMITS_URL: ${{ github.event.pull_request.commits_url }}
+      run: |
+        if [ "${COMMITS_URL}x" != "x" ]; then
+          # API URL details: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-commits-on-a-pull-request
+          LAST_MSG=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "${COMMITS_URL}?per_page=3" | jq -r .[-1].commit.message)
+        fi
+        NRF_802154_REV=$(echo $LAST_MSG | awk 'NR==1 {print $3}' | head)
+        echo "NRF_802154_REV is $NRF_802154_REV"
+        PROJECT_KEY=$(yq --exit-status '.manifest.projects[] | select(.name == "nrf-802154") |  key' west.yml)
+        yq ".manifest.projects[$PROJECT_KEY].revision = \"$NRF_802154_REV\"" west.yml > tmp.yml
+        diff -B west.yml tmp.yml | patch west.yml -
+    - name: Commit changed west.yml and create PR
+      run: |
+        git checkout -b manifest_pr
+        git add west.yml
+        git commit -m "manifest: Update ${{ github.event.repository.name }} revision (auto-manifest PR)" -m "Automatically created by Github Action" --signoff
+        git remote add fork https://nordicbuilder:${{ inputs.token }}@github.com/nordicbuilder/sdk-nrf-testing
+        git push -u fork manifest_pr:auto-manifest-${{ github.event.repository.name }}-${{ github.event.pull_request.number }}
+        gh pr create --base main --repo ${{ inputs.target-repo }} --title "manifest: Update revision of ${{ github.event.repository.name }}" \
+          --body "Automatically created by Github Action from PR: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/${{ github.event.pull_request.number }}"
+
