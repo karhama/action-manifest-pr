@@ -38,7 +38,7 @@ runs:
         gh run cancel ${{ github.run_id }}
         gh run watch ${{ github.run_id }}
       env:
-        GITHUB_TOKEN: ${{ input.token }}
+        GH_TOKEN: ${{ inputs.token }}
 
 # fail in case of external user
     - name: Add external label
