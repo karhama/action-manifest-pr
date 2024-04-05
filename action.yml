@@ -2,11 +2,21 @@
 # You can call this workflow in your repository. See the example caller workflow:
 #
 # --------------------------------------------------------------------------------------
-# name: Auto create manifest PR
-# on: pull_request
-# jobs:
-#   call-workflow:
-#     uses: nordicbuilder/action-manifest-pr/.github/workflows/auto-manifest-PR.yml@main
+#name: handle manifest PR
+#on:
+#  pull_request_target:
+#    types: [opened, synchronize, closed]
+#    branches:
+#      - main
+#
+#jobs:
+#  create-manifest-pr:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Create manifest PR
+#        uses: nrfconnect/action-manifest-pr@main
+#        with:
+#          token: ${{ secrets.NCS_GITHUB_TOKEN }}
 # --------------------------------------------------------------------------------------
 
 name: 'Manifest PR handler'
