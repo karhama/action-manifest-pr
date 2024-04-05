@@ -34,9 +34,8 @@ runs:
   using: "composite"
   steps:
     - name: Skip string cancel
-      if: |
-        contains(github.event.pull_request.title, ${{ inputs.skip-string }} ) ||
-        contains(github.event.pull_request.body, ${{ inputs.skip-string }} )
+      if: contains(github.event.pull_request.title, inputs.skip-string ) ||
+        contains(github.event.pull_request.body, inputs.skip-string )
       shell: bash
       run: |
         gh run cancel --repo ${{ github.repository }} ${{ github.run_id }} 
