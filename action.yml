@@ -36,8 +36,8 @@ runs:
     - name: Early exit
       shell: bash
       run: |
-        gh run --repo {{ github.repository }} cancel ${{ github.run_id }} 
-        gh run --repo {{ github.repository }} watch ${{ github.run_id }}
+        gh run cancel --repo {{ github.repository }} ${{ github.run_id }} 
+        gh run watch --repo {{ github.repository }} ${{ github.run_id }}
       env:
         GH_TOKEN: ${{ inputs.token }}
 
